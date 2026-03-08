@@ -1,0 +1,12 @@
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
+
+# Runtime logs/temp
+*.log
+*.tmp
+
+# Paintball runtime data (generated after first container start)
+pball/*
+!pball/myserver.cfg

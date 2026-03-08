@@ -1,0 +1,23 @@
+services:
+  dppb2:
+    image: nukla/paintball2:latest
+    container_name: dppb2
+    restart: unless-stopped
+    ports:
+      - "27910:27910/udp"
+    volumes:
+      - ./pball:/paintball2/pball
+    command:
+      - +set
+      - dedicated
+      - "1"
+      - +set
+      - public
+      - "1"
+      - +set
+      - port
+      - "27910"
+      - +exec
+      - myserver.cfg
+      - +map
+      - midnight
