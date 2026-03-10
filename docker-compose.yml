@@ -1,7 +1,12 @@
 services:
   dppb2_map_init:
     image: nukla/paintball2:latest
-    restart: "no"
+    restart: on-failure:5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     user: "0:0"
     entrypoint:
       - /bin/sh
@@ -56,6 +61,11 @@ services:
     image: nukla/paintball2:latest
     container_name: dppb2
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     depends_on:
       dppb2_map_init:
         condition: service_completed_successfully
