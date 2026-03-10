@@ -1,19 +1,28 @@
 # dppb2 game server
 
-Docker Compose setup for hosting a **Digital Paint: Paintball 2** dedicated server.
+Docker Compose setup for a public **Digital Paint: Paintball 2** dedicated server.
 
-## Important network note
+The server is visible in the global PB2 server list and runs on UDP port `27910`.
 
-This game server uses **UDP** (default port `27910`), not HTTP.
+## Project structure
 
-- For players, the main thing is: `dppb.anatoliy.ch` must resolve to your server IP.
-- Open/forward `27910/udp` on firewall/router to the host with Docker.
-- HTTP reverse proxy config (`server { location / { ... } }`) will not work for this traffic.
+- `docker-compose.yml` - starts services and exposes `27910/udp`.
+- `pball/server.cfg` - main server config (`hostname`, `website`, `e-mail`, slots, etc.).
+- `pball/motd.txt` - Message of the Day shown by compatible clients.
+- `pball/maps/italy.bsp` - map file mounted into the container.
+- `pball/gamei386.so` - server game module.
 
-## Files
+## How it works
 
-- `docker-compose.yml` - starts container `dppb2` and exposes `27910/udp`.
-- `pball/myserver.cfg` - your custom game server config.
+Compose starts two services:
+
+1. `dppb2_map_init` (one-shot init):
+   - copies `gamei386.so` into local `pball/` if needed
+   - downloads `italy.bsp` if missing
+2. `dppb2` (main server):
+   - runs dedicated PB2 server
+   - executes `server.cfg`
+   - starts map `italy`
 
 ## Run
 
@@ -22,44 +31,68 @@ docker compose up -d
 docker compose logs -f dppb2
 ```
 
-## Player connection
+Stop:
 
-In Paintball 2 client console:
-
-```text
-connect dppb.anatoliy.ch:27910
+```bash
+docker compose down
 ```
 
-## If you really need nginx in front
+Restart after config changes:
 
-Use `stream` (UDP), not `http`. Domain-based routing is not available for this protocol, so route by port.
+```bash
+docker compose restart dppb2
+```
 
-```nginx
-stream {
-    upstream dppb2_upstream {
-        server dppb2:27910;
-    }
+## Configuration
 
-    server {
-        listen 27910 udp;
-        proxy_pass dppb2_upstream;
-    }
-}
+Edit `pball/server.cfg`.
+
+Common fields:
+
+```cfg
+set hostname "[CIS] @ch_an Italy"
+set website "https://anatoliy.ch" s
+set e-mail "pb2@anatoliy.ch" s
+set maxclients 16
+set port 27910
+set motdfile pball/configs/motd.txt
+```
+
+Edit MOTD text in `pball/motd.txt`.
+
+## Network requirements
+
+- UDP port `27910` must be open/forwarded to the Docker host.
+- HTTP reverse proxy is not required.
+
+## Quick checks
+
+Container status:
+
+```bash
+docker ps --filter name=dppb2
+```
+
+Logs:
+
+```bash
+docker logs --tail 100 dppb2
+```
+
+Local UDP status probe:
+
+```bash
+python3 - <<'PY'
+import socket
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.settimeout(2)
+s.sendto(b'\xff\xff\xff\xffstatus\n', ('127.0.0.1', 27910))
+print(s.recvfrom(8192)[0].decode('latin1', 'ignore'))
+PY
 ```
 
 ## Sources
 
 - Official site: [digitalpaint.org](http://digitalpaint.org)
 - Server docs: [Digital Paint - Servers](http://digitalpaint.org/v2/docs/server.html)
-- Docker image discussion: [Digital Paint forum thread](https://forums.digitalpaint.org/index.php?topic=28768.0)
-
-## Push to private GitHub repository
-
-```bash
-git init
-git add .
-git commit -m "Initial Paintball 2 dedicated server setup"
-git branch -M main
-git remote add origin git@github.com:<your-user>/<your-private-repo>.git
-git push -u origin main
-```
+- Docker image thread: [Digital Paint forum](https://forums.digitalpaint.org/index.php?topic=28768.0)
