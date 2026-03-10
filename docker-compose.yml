@@ -45,7 +45,8 @@ services:
       - "27910:27910/udp"
     volumes:
       - ./pball/maps/italy.bsp:/paintball2/pball/maps/italy.bsp:ro
-      - ./server.cfg:/paintball2/pball/configs/server.cfg:ro
+      - ./pball/server.cfg:/paintball2/pball/configs/server.cfg:ro
+      - ./pball/motd.txt:/paintball2/pball/configs/motd.txt:ro
     command:
       - +set
       - dedicated
