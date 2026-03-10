@@ -9,4 +9,3 @@
 
 # Paintball runtime data (generated after first container start)
 pball/*
-!pball/myserver.cfg

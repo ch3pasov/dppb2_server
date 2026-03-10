@@ -1,23 +1,56 @@
 services:
+  dppb2_map_init:
+    image: nukla/paintball2:latest
+    restart: "no"
+    user: "0:0"
+    entrypoint:
+      - /bin/sh
+      - -lc
+    volumes:
+      - ./pball:/pball
+      - ./pball/maps:/maps
+    command:
+      - |
+        set -e
+        BIN_SRC="/home/dpserver/pball/gamei386.so"
+        BIN_DST="/pball/gamei386.so"
+        MAP_FILE="/maps/italy.bsp"
+        MAP_URL="http://dplogin.com/files/maps/italy.bsp"
+        mkdir -p /pball
+        mkdir -p /maps
+
+        if [ ! -s "$$BIN_DST" ]; then
+          echo "Copying gamei386.so to $$BIN_DST"
+          cp "$$BIN_SRC" "$$BIN_DST"
+        fi
+
+        # Handle corrupted state if italy.bsp accidentally exists as a directory
+        if [ -d "$$MAP_FILE" ]; then
+          rm -rf "$$MAP_FILE"
+        fi
+
+        if [ ! -s "$$MAP_FILE" ]; then
+          echo "Downloading italy.bsp to $$MAP_FILE"
+          wget -q -O "$$MAP_FILE" "$$MAP_URL"
+        fi
+
   dppb2:
     image: nukla/paintball2:latest
     container_name: dppb2
     restart: unless-stopped
+    depends_on:
+      dppb2_map_init:
+        condition: service_completed_successfully
     ports:
       - "27910:27910/udp"
     volumes:
-      - ./pball:/paintball2/pball
+      - ./pball/maps/italy.bsp:/paintball2/pball/maps/italy.bsp:ro
+      - ./server.cfg:/paintball2/pball/configs/server.cfg:ro
     command:
       - +set
       - dedicated
       - "1"
-      - +set
-      - public
-      - "1"
-      - +set
-      - port
-      - "27910"
       - +exec
-      - myserver.cfg
+      - server.cfg
       - +map
-      - midnight
+      - italy
