@@ -14,10 +14,13 @@ services:
         set -e
         BIN_SRC="/home/dpserver/pball/gamei386.so"
         BIN_DST="/pball/gamei386.so"
+        CFG_SRC_DIR="/home/dpserver/pball/configs"
+        CFG_DST_DIR="/pball/configs"
         MAP_FILE="/maps/italy.bsp"
         MAP_URL="http://dplogin.com/files/maps/italy.bsp"
         mkdir -p /pball
         mkdir -p /maps
+        mkdir -p "$$CFG_DST_DIR"
 
         if [ ! -s "$$BIN_DST" ]; then
           echo "Copying gamei386.so to $$BIN_DST"
@@ -34,6 +37,21 @@ services:
           wget -q -O "$$MAP_FILE" "$$MAP_URL"
         fi
 
+        for cfg in default.cfg rotation.txt commands.txt; do
+          if [ ! -s "$$CFG_DST_DIR/$$cfg" ]; then
+            echo "Copying $$cfg to $$CFG_DST_DIR/$$cfg"
+            cp "$$CFG_SRC_DIR/$$cfg" "$$CFG_DST_DIR/$$cfg"
+          fi
+        done
+
+        if [ -s "/pball/server.cfg" ] && [ ! -s "$$CFG_DST_DIR/server.cfg" ]; then
+          cp "/pball/server.cfg" "$$CFG_DST_DIR/server.cfg"
+        fi
+
+        if [ -s "/pball/motd.txt" ] && [ ! -s "$$CFG_DST_DIR/motd.txt" ]; then
+          cp "/pball/motd.txt" "$$CFG_DST_DIR/motd.txt"
+        fi
+
   dppb2:
     image: nukla/paintball2:latest
     container_name: dppb2
@@ -45,8 +63,7 @@ services:
       - "27910:27910/udp"
     volumes:
       - ./pball/maps/italy.bsp:/paintball2/pball/maps/italy.bsp:ro
-      - ./pball/server.cfg:/paintball2/pball/configs/server.cfg:ro
-      - ./pball/motd.txt:/paintball2/pball/configs/motd.txt:ro
+      - ./pball/configs:/paintball2/pball/configs:ro
     command:
       - +set
       - dedicated
