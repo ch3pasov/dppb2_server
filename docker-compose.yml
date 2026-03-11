@@ -49,13 +49,19 @@ services:
           fi
         done
 
-        if [ -s "/pball/server.cfg" ] && [ ! -s "$$CFG_DST_DIR/server.cfg" ]; then
+        # Always sync user-managed configs into runtime config dir.
+        if [ -s "/pball/server.cfg" ]; then
           cp "/pball/server.cfg" "$$CFG_DST_DIR/server.cfg"
         fi
 
-        if [ -s "/pball/motd.txt" ] && [ ! -s "$$CFG_DST_DIR/motd.txt" ]; then
+        if [ -s "/pball/motd.txt" ]; then
           cp "/pball/motd.txt" "$$CFG_DST_DIR/motd.txt"
         fi
+
+        # Keep configs editable from the host even if created by root in container.
+        chmod -R a+rwX "$$CFG_DST_DIR"
+        [ -f /pball/server.cfg ] && chmod a+rw /pball/server.cfg || true
+        [ -f /pball/motd.txt ] && chmod a+rw /pball/motd.txt || true
 
   dppb2:
     image: nukla/paintball2:latest
