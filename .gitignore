@@ -9,5 +9,8 @@
 
 # Paintball runtime data (generated after first container start)
 pball/*
-!pball/server.cfg
-!pball/motd.txt
+
+# User-managed server configuration
+!config/
+!config/server.cfg
+!config/motd.txt

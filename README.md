@@ -7,8 +7,8 @@ The server is visible in the global PB2 server list and runs on UDP port `27910`
 ## Project structure
 
 - `docker-compose.yml` - starts services and exposes `27910/udp`.
-- `pball/server.cfg` - main server config (`hostname`, `website`, `e-mail`, slots, etc.).
-- `pball/motd.txt` - Message of the Day shown by compatible clients.
+- `config/server.cfg` - main server config (`hostname`, `website`, `e-mail`, slots, etc.).
+- `config/motd.txt` - Message of the Day shown by compatible clients.
 - `pball/maps/italy.bsp` - map file mounted into the container.
 - `pball/gamei386.so` - server game module.
 
@@ -45,7 +45,7 @@ docker compose restart dppb2
 
 ## Configuration
 
-Edit `pball/server.cfg`.
+Edit `config/server.cfg`.
 
 Common fields:
 
@@ -58,7 +58,7 @@ set port 27910
 set motdfile pball/configs/motd.txt
 ```
 
-Edit MOTD text in `pball/motd.txt`.
+Edit MOTD text in `config/motd.txt`.
 
 ## Network requirements
 
