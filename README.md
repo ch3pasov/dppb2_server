@@ -10,6 +10,7 @@ The server is visible in the global PB2 server list and runs on UDP port `27910`
 - `config/server.cfg` - main server config (`hostname`, `website`, `e-mail`, slots, etc.).
 - `config/motd.txt` - Message of the Day shown by compatible clients.
 - `pball/maps/italy.bsp` - map file mounted into the container.
+- `pball/textures/` - synced texture tree used by the server (`pball`, `sfx`, and Italy dependencies).
 - `pball/gamei386.so` - server game module.
 
 ## How it works
@@ -19,6 +20,8 @@ Compose starts two services:
 1. `dppb2_map_init` (one-shot init):
    - copies `gamei386.so` into local `pball/` if needed
    - downloads `italy.bsp` if missing
+   - syncs base textures (`pball`, `sfx`) from image to local `pball/textures`
+   - downloads Italy-specific missing textures from `dplogin/files/textures/*`
 2. `dppb2` (main server):
    - runs dedicated PB2 server
    - executes `server.cfg`

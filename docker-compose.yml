@@ -22,11 +22,15 @@ services:
         BIN_DST="/pball/gamei386.so"
         CFG_SRC_DIR="/home/dpserver/pball/configs"
         CFG_DST_DIR="/pball/configs"
+        BASE_TEXTURES_SRC_DIR="/home/dpserver/pball/textures"
+        TEXTURE_DST_DIR="/pball/textures"
+        TEXTURE_SRC_BASE_URL="http://dplogin.com/files/textures"
         MAP_FILE="/maps/italy.bsp"
         MAP_URL="http://dplogin.com/files/maps/italy.bsp"
         mkdir -p /pball
         mkdir -p /maps
         mkdir -p "$$CFG_DST_DIR"
+        mkdir -p "$$TEXTURE_DST_DIR"
 
         if [ ! -s "$$BIN_DST" ]; then
           echo "Copying gamei386.so to $$BIN_DST"
@@ -41,6 +45,61 @@ services:
         if [ ! -s "$$MAP_FILE" ]; then
           echo "Downloading italy.bsp to $$MAP_FILE"
           wget -q -O "$$MAP_FILE" "$$MAP_URL"
+        fi
+
+        if [ -d "$$BASE_TEXTURES_SRC_DIR/pball" ]; then
+          mkdir -p "$$TEXTURE_DST_DIR/pball"
+          cp -a "$$BASE_TEXTURES_SRC_DIR/pball/." "$$TEXTURE_DST_DIR/pball/"
+        fi
+
+        if [ -d "$$BASE_TEXTURES_SRC_DIR/sfx" ]; then
+          mkdir -p "$$TEXTURE_DST_DIR/sfx"
+          cp -a "$$BASE_TEXTURES_SRC_DIR/sfx/." "$$TEXTURE_DST_DIR/sfx/"
+        fi
+
+        ensure_texture() {
+          tex_path="$$1"
+          tex_group="$${tex_path%%/*}"
+          tex_name="$${tex_path#*/}"
+          dst_dir="$$TEXTURE_DST_DIR/$$tex_group"
+          mkdir -p "$$dst_dir"
+
+          for ext in jpg tga wal png pcx; do
+            if [ -s "$$dst_dir/$$tex_name.$$ext" ]; then
+              return 0
+            fi
+          done
+
+          for ext in jpg tga wal png pcx; do
+            src_url="$$TEXTURE_SRC_BASE_URL/$$tex_group/$$tex_name.$$ext"
+            if wget -q --spider "$$src_url"; then
+              echo "Downloading $$tex_path.$$ext"
+              wget -q -O "$$dst_dir/$$tex_name.$$ext" "$$src_url"
+              return 0
+            fi
+          done
+
+          echo "Warning: could not download texture $$tex_path" >&2
+          return 1
+        }
+
+        missing_italy_textures=0
+        for tex in \
+          ctp1/concrete_g_ ctp1/marble_m_1 ctp1/roof_t_1 ctp1/roof_t_3 ctp1/tiles_m_5 \
+          pball/azwall3_2 pball/b_brl1 pball/b_brl2 pball/b_brt1 pball/b_brt2 pball/b_flag1 \
+          pball/b_wood1 pball/box3 pball/box3_5 pball/box4_1 pball/box4_2 pball/box_1 \
+          pball/city5_3 pball/city6_7 pball/city6_8 pball/clip pball/grave03_4 pball/hay_side \
+          pball/lit2_5 pball/lit3_2 pball/ncmarb1 pball/r_brl1 pball/r_brt1 pball/r_flag1 \
+          pball/r_wood1 pball/rock1_1 pball/rock3_7 pball/rock4_2 pball/rockp2_2 pball/roofp1_1 \
+          pball/sky2 pball/tudorstone1 pball/tudorstone2 pball/uwall1_3 pball/w_wood5 \
+          pball/wizwood1_3 pball/wizwood1_4 pball/wood1_1 pball/wood1_7 pball/woodflr1_2; do
+          if ! ensure_texture "$$tex"; then
+            missing_italy_textures=$$((missing_italy_textures + 1))
+          fi
+        done
+
+        if [ "$$missing_italy_textures" -gt 0 ]; then
+          echo "Warning: $$missing_italy_textures italy textures are still missing." >&2
         fi
 
         for cfg in default.cfg rotation.txt commands.txt; do
@@ -80,6 +139,7 @@ services:
       - "27910:27910/udp"
     volumes:
       - ./pball/maps/italy.bsp:/paintball2/pball/maps/italy.bsp:ro
+      - ./pball/textures:/paintball2/pball/textures:ro
       - ./pball/configs:/paintball2/pball/configs:ro
     command:
       - +set
