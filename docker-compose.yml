@@ -118,10 +118,24 @@ services:
           cp "/config/motd.txt" "$$CFG_DST_DIR/motd.txt"
         fi
 
+        # PB2 expects pball/configs/logins<port>.txt; keep a single repo file config/logins.txt
+        if [ -s "/config/logins.txt" ]; then
+          PB_PORT=27910
+          if [ -s "/config/server.cfg" ]; then
+            line=$$(grep -E '^[[:space:]]*set[[:space:]]+port[[:space:]]+[0-9]+' /config/server.cfg | head -1)
+            if [ -n "$$line" ]; then
+              PB_PORT=$$(echo "$$line" | awk '{print $$3}')
+            fi
+          fi
+          cp "/config/logins.txt" "$$CFG_DST_DIR/logins$$PB_PORT.txt"
+          echo "Synced login operators to logins$$PB_PORT.txt"
+        fi
+
         # Keep configs editable from the host even if created by root in container.
         chmod -R a+rwX "$$CFG_DST_DIR"
         [ -f /config/server.cfg ] && chmod a+rw /config/server.cfg || true
         [ -f /config/motd.txt ] && chmod a+rw /config/motd.txt || true
+        [ -f /config/logins.txt ] && chmod a+rw /config/logins.txt || true
 
   dppb2:
     image: nukla/paintball2:latest

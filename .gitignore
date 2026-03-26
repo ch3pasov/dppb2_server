@@ -14,3 +14,4 @@ pball/*
 !config/
 !config/server.cfg
 !config/motd.txt
+!config/logins.txt

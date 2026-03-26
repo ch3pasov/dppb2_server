@@ -1,2 +1,6 @@
-1. [x] Если ранее не заходить на другие сервера с italy, клиент скачивал карту, но часть текстур заменялась плейсхолдерами.
-   Решение: в `dppb2_map_init` добавлена синхронизация базовых текстур (`pball`, `sfx`) и докачка Italy-зависимостей из `dplogin/files/textures/*`, плюс смонтирован `./pball/textures` в основной контейнер.
+1. [x] If the client had not previously joined other servers running italy, it would download the map but some textures were replaced with placeholders.
+   Fix: `dppb2_map_init` now syncs base textures (`pball`, `sfx`), fetches Italy-specific assets from `dplogin/files/textures/*`, and `./pball/textures` is mounted into the main server container.
+
+2. [ ] Curate a default casual map rotation preset: small layouts suited to low player counts, no ground-spawned weapons, and no maps where CO2/oxygen capsules force an awkward reload cycle at round start.
+
+3. [ ] Split bot settings into a dedicated config (mounted or synced like other server configs) so every bot-related cvar/option exposed by the game can be tuned without hunting through `server.cfg` or image defaults.

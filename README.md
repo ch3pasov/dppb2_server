@@ -9,6 +9,7 @@ The server is visible in the global PB2 server list and runs on UDP port `27910`
 - `docker-compose.yml` - starts services and exposes `27910/udp`.
 - `config/server.cfg` - main server config (`hostname`, `website`, `e-mail`, slots, etc.).
 - `config/motd.txt` - Message of the Day shown by compatible clients.
+- `config/logins.txt` - dplogin operator list (`player_id op_level` per line); init copies it to `pball/configs/logins<port>.txt` using `set port` from `server.cfg` (required by PB2).
 - `pball/maps/italy.bsp` - map file mounted into the container.
 - `pball/textures/` - synced texture tree used by the server (`pball`, `sfx`, and Italy dependencies).
 - `pball/gamei386.so` - server game module.
@@ -22,6 +23,7 @@ Compose starts two services:
    - downloads `italy.bsp` if missing
    - syncs base textures (`pball`, `sfx`) from image to local `pball/textures`
    - downloads Italy-specific missing textures from `dplogin/files/textures/*`
+   - copies `config/server.cfg`, `config/motd.txt`, and `config/logins.txt` (when present) into `pball/configs/` (operators land in `logins<port>.txt` per `set port`)
 2. `dppb2` (main server):
    - runs dedicated PB2 server
    - executes `server.cfg`
@@ -53,7 +55,7 @@ Edit `config/server.cfg`.
 Common fields:
 
 ```cfg
-set hostname "[CIS] @ch_an Italy"
+set hostname "Anatoliy Ch. PB2 server [@ch_an]"
 set website "https://anatoliy.ch" s
 set e-mail "pb2@anatoliy.ch" s
 set maxclients 16
@@ -62,6 +64,10 @@ set motdfile pball/configs/motd.txt
 ```
 
 Edit MOTD text in `config/motd.txt`.
+
+### Login operators (optional)
+
+Edit **`config/logins.txt`** only (no port in the filename). On `dppb2_map_init`, it is copied to **`pball/configs/logins<port>.txt`**, where `<port>` is taken from `set port` in `server.cfg`—that is what PB2 loads. Each line is `<dplogin_player_id> <op_level>` (see [Display Players](https://dplogin.com/index.php?action=displaymembers) on dplogin for IDs). Example: `212130 200` grants full op to dplogin user **volked** (player id `212130`) when that account is used in-game. After changing port or `logins.txt`, re-run init (`docker compose run --rm dppb2_map_init`) or `docker compose up` so the target file is updated.
 
 ## Network requirements
 
