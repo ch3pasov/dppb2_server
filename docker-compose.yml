@@ -118,10 +118,15 @@ services:
           cp "/config/motd.txt" "$$CFG_DST_DIR/motd.txt"
         fi
 
+        if [ -s "/config/logins27910.txt" ]; then
+          cp "/config/logins27910.txt" "$$CFG_DST_DIR/logins27910.txt"
+        fi
+
         # Keep configs editable from the host even if created by root in container.
         chmod -R a+rwX "$$CFG_DST_DIR"
         [ -f /config/server.cfg ] && chmod a+rw /config/server.cfg || true
         [ -f /config/motd.txt ] && chmod a+rw /config/motd.txt || true
+        [ -f /config/logins27910.txt ] && chmod a+rw /config/logins27910.txt || true
 
   dppb2:
     image: nukla/paintball2:latest

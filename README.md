@@ -9,6 +9,7 @@ The server is visible in the global PB2 server list and runs on UDP port `27910`
 - `docker-compose.yml` - starts services and exposes `27910/udp`.
 - `config/server.cfg` - main server config (`hostname`, `website`, `e-mail`, slots, etc.).
 - `config/motd.txt` - Message of the Day shown by compatible clients.
+- `config/logins27910.txt` - dplogin operator list (`player_id op_level` per line; filename must match `set port` in `server.cfg`, e.g. port `27910` → `logins27910.txt`).
 - `pball/maps/italy.bsp` - map file mounted into the container.
 - `pball/textures/` - synced texture tree used by the server (`pball`, `sfx`, and Italy dependencies).
 - `pball/gamei386.so` - server game module.
@@ -22,6 +23,7 @@ Compose starts two services:
    - downloads `italy.bsp` if missing
    - syncs base textures (`pball`, `sfx`) from image to local `pball/textures`
    - downloads Italy-specific missing textures from `dplogin/files/textures/*`
+   - copies `config/server.cfg`, `config/motd.txt`, and `config/logins27910.txt` (when present) into `pball/configs/`
 2. `dppb2` (main server):
    - runs dedicated PB2 server
    - executes `server.cfg`
@@ -62,6 +64,10 @@ set motdfile pball/configs/motd.txt
 ```
 
 Edit MOTD text in `config/motd.txt`.
+
+### Login operators (optional)
+
+`config/logins27910.txt` is copied into `pball/configs/` on `dppb2_map_init` (same as `server.cfg`). Each line is `<dplogin_player_id> <op_level>` (see [Display Players](https://dplogin.com/index.php?action=displaymembers) on dplogin for IDs). Example: `212130 200` grants full op to dplogin user **volked** (player id `212130`) when that account is used in-game. If you change `set port` in `server.cfg`, rename this file to `logins<port>.txt` and update the copy step in `docker-compose.yml`.
 
 ## Network requirements
 
