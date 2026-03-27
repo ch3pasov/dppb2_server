@@ -29,10 +29,10 @@ server:
 # Round rules: seconds until respawn in elimination mode (0 = wait until round end).
 gameplay:
   maxplayers: 16
-  elim: 15
+  elim: 10
   # Bots (game DLL build 46+): bot_min_players is target headcount (humans + bots) with at least one human.
   # Example with 4: 1 human → 3 bots; 3 humans → 1 bot; 5+ humans → no fill bots.
   bots:
-    bot_min_players: 4
+    bot_min_players: 6
     bot_min_bots: 0
     bots_vs_humans: 0
