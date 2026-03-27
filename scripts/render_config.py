@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
 Render config.yaml (current layout) into pball/configs/:
-  - server.cfg
-  - motd.txt + set motdfile when root or server.motd has text
-  - logins<port>.txt from server.operators (port = server.listing.port)
+  - server.cfg (with auto-generated banner; do not edit by hand)
+  - motd.txt + set motdfile when root or server.motd has text (no banner — shown in-game)
+  - logins<port>.txt from server.operators (no banner — format is strict id lines only)
 """
 from __future__ import annotations
 
@@ -24,6 +24,12 @@ except ImportError:
 LISTING_KEYS = frozenset({"listed_in_browser", "master_server", "port", "identity"})
 GENERATED_MOTD_CVAR_PATH = "pball/configs/motd.txt"
 
+# Prepended to outputs so people edit config.yaml instead (Quake-style // comments).
+BANNER_SERVER_CFG = """// -----------------------------------------------------------------------------
+// AUTO-GENERATED — do not edit by hand. This file is overwritten on container start.
+// Source of truth: config.yaml (repo root). Renderer: scripts/render_config.py
+// -----------------------------------------------------------------------------
+"""
 
 def escape_quake(s: str) -> str:
     return s.replace("\\", "\\\\").replace('"', '\\"')
@@ -188,7 +194,8 @@ def main() -> None:
 
     lines, port = build_lines(data)
 
-    (args.dest / "server.cfg").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    server_cfg_body = "\n".join(lines) + "\n"
+    (args.dest / "server.cfg").write_text(BANNER_SERVER_CFG + "\n" + server_cfg_body, encoding="utf-8")
     print(f"Wrote {args.dest / 'server.cfg'}")
 
     motd_write = _normalized_motd_text(data)

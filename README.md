@@ -72,7 +72,7 @@ Edit **`config.yaml`**. On start, the renderer produces:
 
 | Output | Source in YAML |
 |--------|----------------|
-| `pball/configs/server.cfg` | Named blocks (see below), merged in fixed order — **only** executable lines; `#` comments in `config.yaml` are not copied. If **`server.motd`** (or root `motd`) has non-empty text, the renderer also emits **`set motdfile`** pointing at the generated `motd.txt` (you do not configure paths). |
+| `pball/configs/server.cfg` | Named blocks (see below), merged in fixed order. A **`//` banner** at the top states the file is auto-generated — edit **`config.yaml`** instead; `#` comments in YAML are not copied into cfg lines. If **`motd`** has text, the renderer also emits **`set motdfile`** for the generated `motd.txt`. |
 | `pball/configs/motd.txt` | Root **`motd`** or **`server.motd`** (multiline, use `\|`). Omitted or whitespace-only → no file and no `set motdfile` line. |
 | `pball/configs/logins<port>.txt` | **`server.operators`**; `<port>` is **`server.listing.port`**. |
 

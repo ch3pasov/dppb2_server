@@ -8,4 +8,4 @@
 
 4. [ ] Investigate whether annoying mechanics (e.g. oxygen/CO2 capsule pickups and related round-start friction) can be disabled or mitigated via server cvars, game code, or map design—without breaking balance for players who expect stock behavior.
 
-5. [ ] Add warnings to generated config files that they are auto-generated and should not be edited by hand—point people to `config.yaml` instead.
+5. [x] Add warnings to generated config files that they are auto-generated and should not be edited by hand—point people to `config.yaml` instead.
