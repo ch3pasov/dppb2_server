@@ -1,0 +1,35 @@
+# Single source of truth for this Docker PB2 server.
+# Rendered into pball/configs/ on every container start (see scripts/render_config.py).
+schema_version: 1
+
+prelude:
+  - set public 1
+  - setmaster dplogin.com
+
+vars:
+  hostname: "Anatoliy Ch. PB2 server [@ch_an]"
+  motdfile: pball/configs/motd.txt
+  maxclients: 16
+  elim: 15
+  port: 27910
+  bot_min_players: 4
+  bot_min_bots: 0
+  bots_vs_humans: 0
+
+vars_trailing_s:
+  website: https://anatoliy.ch
+  e-mail: pb2@anatoliy.ch
+
+# Bots (PB2 game DLL build 46+): bot_min_players = target headcount (humans+bots) while ≥1 human connected.
+# With 4: 1 human→3 bots; 3 humans→1 bot; 5+ humans→0 fill. See digitalpaint.org news (Build 46).
+
+motd: |
+  Message of the Day
+  ------------------
+
+  Welcome to Anatoliy Ch. PB2 server.
+  Be respectful and have fun!
+
+operators:
+  - id: 212130
+    op_level: 200

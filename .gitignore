@@ -10,8 +10,6 @@
 # Paintball runtime data (generated after first container start)
 pball/*
 
-# User-managed server configuration
+# User-managed server configuration (single YAML source)
 !config/
-!config/server.cfg
-!config/motd.txt
-!config/logins.txt
+!config/server.yaml

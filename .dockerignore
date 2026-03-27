@@ -1,0 +1,5 @@
+# Keep build context small (game files come from volumes / map init, not the image)
+pball/
+.git
+*.md
+.cursor

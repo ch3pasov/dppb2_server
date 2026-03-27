@@ -3,4 +3,7 @@
 
 2. [ ] Curate a default casual map rotation preset: small layouts suited to low player counts, no ground-spawned weapons, and no maps where CO2/oxygen capsules force an awkward reload cycle at round start.
 
-3. [ ] Split bot settings into a dedicated config (mounted or synced like other server configs) so every bot-related cvar/option exposed by the game can be tuned without hunting through `server.cfg` or image defaults.
+3. [x] Split bot settings into a dedicated config (mounted or synced like other server configs) so every bot-related cvar/option exposed by the game can be tuned without hunting through `server.cfg` or image defaults.
+   Fix: Superseded by unified `config/server.yaml` + `render_config.py`; bot cvars are under `vars` in YAML.
+
+4. [ ] Investigate whether annoying mechanics (e.g. oxygen/CO2 capsule pickups and related round-start friction) can be disabled or mitigated via server cvars, game code, or map design—without breaking balance for players who expect stock behavior.
