@@ -1,4 +1,4 @@
 # Optional: render config locally without Docker
 #   pip install -r scripts/requirements.txt
-#   python3 scripts/render_config.py --config config/server.yaml --dest pball/configs
+#   python3 scripts/render_config.py --config config.yaml --dest pball/configs
 PyYAML>=6.0

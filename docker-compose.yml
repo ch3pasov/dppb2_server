@@ -15,7 +15,7 @@ services:
     volumes:
       - ./pball:/pball
       - ./pball/maps:/maps
-      - ./config:/config
+      - ./config.yaml:/config/config.yaml
       - ./scripts:/scripts:ro
     command:
       - |
@@ -115,8 +115,8 @@ services:
 
         # Keep configs editable from the host even if created by root in container.
         chmod -R a+rwX "$$CFG_DST_DIR"
-        [ -f /config/server.yaml ] && chmod a+rw /config/server.yaml || true
-        [ -f /config/server.yml ] && chmod a+rw /config/server.yml || true
+        [ -f /config/config.yaml ] && chmod a+rw /config/config.yaml || true
+        [ -f /config/config.yml ] && chmod a+rw /config/config.yml || true
 
   dppb2:
     image: dppb2-server:local
@@ -137,7 +137,7 @@ services:
       - ./pball/maps/italy.bsp:/paintball2/pball/maps/italy.bsp:ro
       - ./pball/textures:/paintball2/pball/textures:ro
       - ./pball/configs:/paintball2/pball/configs:rw
-      - ./config:/config:ro
+      - ./config.yaml:/config/config.yaml:ro
       - ./scripts:/scripts:ro
     entrypoint:
       - /bin/sh

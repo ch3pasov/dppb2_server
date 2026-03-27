@@ -1,4 +1,4 @@
-# PB2 dedicated server + tools to render config/server.yaml into pball/configs/
+# PB2 dedicated server + tools to render config.yaml into pball/configs/
 FROM nukla/paintball2:latest
 
 USER root

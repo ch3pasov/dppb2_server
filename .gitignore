@@ -10,6 +10,4 @@
 # Paintball runtime data (generated after first container start)
 pball/*
 
-# User-managed server configuration (single YAML source)
-!config/
-!config/server.yaml
+# User-managed server configuration lives at repo root: config.yaml

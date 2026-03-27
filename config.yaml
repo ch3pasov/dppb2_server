@@ -1,0 +1,38 @@
+# Single source of truth for this Docker PB2 server (project-wide).
+# Rendered into pball/configs/ on every container start (see scripts/render_config.py).
+schema_version: 4
+
+motd: |
+  Message of the Day
+  ------------------
+
+  Welcome to Anatoliy Ch. PB2 server.
+  Be respectful and have fun!
+
+# Public server settings: master browser listing, name, port, contacts, MOTD.
+server:
+  # Global server list: visibility in the in-game browser and master-server heartbeat.
+  listing:
+    listed_in_browser: true
+    master_server: dplogin.com
+    port: 27910
+    identity:
+      hostname: "Anatoliy Ch. PB2 server [@ch_an]"
+      contact:
+        website: https://anatoliy.ch
+        e-mail: pb2@anatoliy.ch
+
+  operators:
+    - id: 212130
+      op_level: 200
+
+# Round rules: seconds until respawn in elimination mode (0 = wait until round end).
+gameplay:
+  maxplayers: 16
+  elim: 15
+  # Bots (game DLL build 46+): bot_min_players is target headcount (humans + bots) with at least one human.
+  # Example with 4: 1 human → 3 bots; 3 humans → 1 bot; 5+ humans → no fill bots.
+  bots:
+    bot_min_players: 4
+    bot_min_bots: 0
+    bots_vs_humans: 0

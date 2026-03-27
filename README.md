@@ -8,8 +8,8 @@ The server is visible in the global PB2 server list and runs on UDP port `27910`
 
 - `docker-compose.yml` - builds a thin layer on top of `nukla/paintball2` and starts services.
 - `Dockerfile` - adds **Python 3 + PyYAML** and copies `scripts/render_config.py` / `apply-config.sh` (the base image has no YAML stack).
-- `config/server.yaml` - **single source of truth** for server cvars, MOTD, and dplogin operators; rendered into `pball/configs/` on every game container start.
-- `scripts/render_config.py` - reads `server.yaml` and writes `server.cfg`, `motd.txt`, and `logins<port>.txt`.
+- `config.yaml` (repo root) - **single source of truth** for server cvars, MOTD, and dplogin operators; rendered into `pball/configs/` on every game container start.
+- `scripts/render_config.py` - reads `config.yaml` and writes `server.cfg`, `motd.txt`, and `logins<port>.txt`.
 - `scripts/apply-config.sh` - wrapper used by Compose entrypoints.
 - `pball/maps/italy.bsp` - map file mounted into the container.
 - `pball/textures/` - synced texture tree used by the server (`pball`, `sfx`, and Italy dependencies).
@@ -25,10 +25,10 @@ Both **`dppb2_map_init`** and **`dppb2`** use the same image **`dppb2-server:loc
    - syncs base textures (`pball`, `sfx`) from image to local `pball/textures`
    - downloads Italy-specific missing textures from `dplogin/files/textures/*`
    - seeds `default.cfg` / `rotation.txt` / `commands.txt` if missing
-   - runs **`apply-config.sh`** → **`render_config.py`** so `pball/configs/` matches **`config/server.yaml`**
+   - runs **`apply-config.sh`** → **`render_config.py`** so `pball/configs/` matches **`config.yaml`**
 2. `dppb2` (main server):
    - on **each start** (including `docker compose restart dppb2`): **`apply-config.sh`** then `start.sh +exec server.cfg +map italy`
-   - `config/` is mounted read-only; `pball/configs/` is writable so generated files land on the host tree the server reads
+   - `config.yaml` is mounted read-only at `/config/config.yaml`; `pball/configs/` is writable so generated files land on the host tree the server reads
 
 **First run / after pulling:** build the image once (Compose does this on `up` if missing):
 
@@ -50,7 +50,7 @@ Stop:
 docker compose down
 ```
 
-Restart after **editing `config/server.yaml`**:
+Restart after **editing `config.yaml`**:
 
 ```bash
 docker compose restart dppb2
@@ -64,48 +64,50 @@ docker compose up -d --build --force-recreate
 
 If `/scripts/render_config.py` is missing inside the container, you are on an old image—run **`docker compose build`** and recreate **`dppb2`**.
 
-You only need **`dppb2_map_init`** again for assets it owns (`gamei386.so`, `italy.bsp`, texture sync, seeding default configs when missing)—not for routine edits to **`server.yaml`**.
+You only need **`dppb2_map_init`** again for assets it owns (`gamei386.so`, `italy.bsp`, texture sync, seeding default configs when missing)—not for routine edits to **`config.yaml`**.
 
-## Configuration (`config/server.yaml`)
+## Configuration (`config.yaml`)
 
-Edit **`config/server.yaml`**. On start, the renderer produces:
+Edit **`config.yaml`**. On start, the renderer produces:
 
 | Output | Source in YAML |
 |--------|----------------|
-| `pball/configs/server.cfg` | `prelude` (raw lines), `vars` (`set key value`), `vars_trailing_s` (`set key "val" s`) — **only** executable lines; use `#` comments in `server.yaml` for notes (they are not copied into `server.cfg`) |
-| `pball/configs/motd.txt` | `motd` (multiline string; use `\|` block) |
-| `pball/configs/logins<port>.txt` | `operators` list; `<port>` is **`vars.port`** (required) |
+| `pball/configs/server.cfg` | Named blocks (see below), merged in fixed order — **only** executable lines; `#` comments in `config.yaml` are not copied. If **`server.motd`** (or root `motd`) has non-empty text, the renderer also emits **`set motdfile`** pointing at the generated `motd.txt` (you do not configure paths). |
+| `pball/configs/motd.txt` | Root **`motd`** or **`server.motd`** (multiline, use `\|`). Omitted or whitespace-only → no file and no `set motdfile` line. |
+| `pball/configs/logins<port>.txt` | **`server.operators`**; `<port>` is **`server.listing.port`**. |
+
+**Layout** (`schema_version: 4`): root **`motd`** (optional). **`server.listing`**: `listed_in_browser`, `master_server`, **`port`**, nested **`identity`** (`hostname`, nested **`contact`**). **`server.operators`** optional. **`gameplay`**: **`maxplayers`** (emitted as engine cvar **`maxclients`**), **`elim`**, nested **`bots`**. The renderer supports **this shape only**; older config layouts need to be migrated.
 
 Example (abbreviated):
 
 ```yaml
-prelude:
-  - set public 1
-  - setmaster dplogin.com
-
-vars:
-  hostname: "Anatoliy Ch. PB2 server [@ch_an]"
-  motdfile: pball/configs/motd.txt
-  maxclients: 16
-  elim: 15
-  port: 27910
-  bot_min_players: 4
-  bot_min_bots: 0
-  bots_vs_humans: 0
-
-vars_trailing_s:
-  website: https://anatoliy.ch
-  e-mail: pb2@anatoliy.ch
-
-# Comments in server.yaml stay here only; generated server.cfg has no // lines.
+schema_version: 4
 
 motd: |
   First line of MOTD
   ...
 
-operators:
-  - id: 212130
-    op_level: 200
+server:
+  listing:
+    listed_in_browser: true
+    master_server: dplogin.com
+    port: 27910
+    identity:
+      hostname: "My PB2 server"
+      contact:
+        website: https://example.com
+        e-mail: admin@example.com
+  operators:
+    - id: 212130
+      op_level: 200
+
+gameplay:
+  maxplayers: 16
+  elim: 15
+  bots:
+    bot_min_players: 4
+    bot_min_bots: 0
+    bots_vs_humans: 0
 ```
 
 Omit **`operators`** (or use `operators: []`) if you do not want a `logins*.txt` file generated.
@@ -114,18 +116,18 @@ Omit **`operators`** (or use `operators: []`) if you do not want a `logins*.txt`
 
 ```bash
 apt install python3-yaml   # or: pip install -r scripts/requirements.txt
-python3 scripts/render_config.py --config config/server.yaml --dest pball/configs
+python3 scripts/render_config.py --config config.yaml --dest pball/configs
 ```
 
 ### Elimination respawn (`elim`)
 
-Set **`vars.elim`** (seconds) before re-entry ([basic server docs](http://digitalpaint.org/docs/server_cvars_basic.txt)); stock game default is **60**. Use **`0`** to stay out until the **round** ends.
+Set **`gameplay.elim`** (seconds) before re-entry ([basic server docs](http://digitalpaint.org/docs/server_cvars_basic.txt)); stock game default is **60**. Use **`0`** to stay out until the **round** ends.
 
 **Team-size scaling** is not available as a stock formula; see earlier notes on **`elim_inc`** / **`elim_increases`** in game docs and news.
 
 ### Bots
 
-Use **`vars`** in YAML for `bot_min_players`, `bot_min_bots`, `bots_vs_humans` (Build 46+, [Digital Paint news](https://digitalpaint.org/news.php)).
+Use **`gameplay.bots`** for `bot_min_players`, `bot_min_bots`, `bots_vs_humans` (Build 46+, [Digital Paint news](https://digitalpaint.org/news.php)).
 
 ### Login operators
 

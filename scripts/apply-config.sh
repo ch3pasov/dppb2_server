@@ -1,20 +1,20 @@
 #!/bin/sh
-# Render config/server.yaml (or .yml) into the PB2 configs directory.
+# Render project config.yaml (or config.yml) into the PB2 configs directory.
 set -e
 DEST="${1:?usage: apply-config.sh <pball/configs-dir>}"
-CONFIG="${CONFIG_DIR:-/config}"
+CONFIG_DIR="${CONFIG_DIR:-/config}"
 mkdir -p "$DEST"
 
 YAML=""
-for f in server.yaml server.yml; do
-  if [ -f "$CONFIG/$f" ]; then
-    YAML="$CONFIG/$f"
+for f in config.yaml config.yml; do
+  if [ -f "$CONFIG_DIR/$f" ]; then
+    YAML="$CONFIG_DIR/$f"
     break
   fi
 done
 
 if [ -z "$YAML" ]; then
-  echo "dppb2: expected $CONFIG/server.yaml (or server.yml)" >&2
+  echo "dppb2: expected $CONFIG_DIR/config.yaml (or config.yml)" >&2
   exit 1
 fi
 
