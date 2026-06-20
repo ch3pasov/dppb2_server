@@ -2,6 +2,7 @@
 """
 Render config.yaml (current layout) into pball/configs/:
   - server.cfg (with auto-generated banner; do not edit by hand)
+  - rotation.txt from root maps: ([maplist] / ### PB2 format)
   - motd.txt + set motdfile when root or server.motd has text (no banner — shown in-game)
   - logins<port>.txt from server.operators (no banner — format is strict id lines only)
 """
@@ -11,6 +12,11 @@ import argparse
 import sys
 from pathlib import Path
 from typing import Any, Mapping
+
+_SCRIPT_DIR = Path(__file__).resolve().parent
+if str(_SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(_SCRIPT_DIR))
+from config_maps import parse_maps  # noqa: E402
 
 try:
     import yaml
@@ -173,6 +179,12 @@ def build_lines(data: dict[str, Any]) -> tuple[list[str], int]:
     return lines, port
 
 
+def write_rotation_txt(dest: Path, map_names: list[str]) -> None:
+    """PB2 rotation file: [maplist] then one map basename per line, then ###."""
+    body = "\n".join(["[maplist]", *map_names, "###", ""])
+    (dest / "rotation.txt").write_text(body, encoding="utf-8")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="Render dppb2 config.yaml to pball/configs/")
     ap.add_argument("--config", required=True, type=Path, help="Path to config.yaml")
@@ -193,6 +205,10 @@ def main() -> None:
         sys.exit(1)
 
     lines, port = build_lines(data)
+
+    map_names = parse_maps(data)
+    write_rotation_txt(args.dest, map_names)
+    print(f"Wrote {args.dest / 'rotation.txt'}")
 
     server_cfg_body = "\n".join(lines) + "\n"
     (args.dest / "server.cfg").write_text(BANNER_SERVER_CFG + "\n" + server_cfg_body, encoding="utf-8")

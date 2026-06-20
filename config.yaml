@@ -2,6 +2,12 @@
 # Rendered into pball/configs/ on every container start (see scripts/render_config.py).
 schema_version: 4
 
+# Map rotation and startup map (first entry = +map at dedicated start; full list = rotation.txt).
+maps:
+  - italy
+  # Second map: use a basename that exists at http://dplogin.com/files/maps/<name>.bsp (crates_hd returns 404 there).
+  - midnight
+
 motd: |
   Message of the Day
   ------------------

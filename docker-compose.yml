@@ -27,8 +27,6 @@ services:
         BASE_TEXTURES_SRC_DIR="/home/dpserver/pball/textures"
         TEXTURE_DST_DIR="/pball/textures"
         TEXTURE_SRC_BASE_URL="http://dplogin.com/files/textures"
-        MAP_FILE="/maps/italy.bsp"
-        MAP_URL="http://dplogin.com/files/maps/italy.bsp"
         mkdir -p /pball
         mkdir -p /maps
         mkdir -p "$$CFG_DST_DIR"
@@ -37,16 +35,6 @@ services:
         if [ ! -s "$$BIN_DST" ]; then
           echo "Copying gamei386.so to $$BIN_DST"
           cp "$$BIN_SRC" "$$BIN_DST"
-        fi
-
-        # Handle corrupted state if italy.bsp accidentally exists as a directory
-        if [ -d "$$MAP_FILE" ]; then
-          rm -rf "$$MAP_FILE"
-        fi
-
-        if [ ! -s "$$MAP_FILE" ]; then
-          echo "Downloading italy.bsp to $$MAP_FILE"
-          wget -q -O "$$MAP_FILE" "$$MAP_URL"
         fi
 
         if [ -d "$$BASE_TEXTURES_SRC_DIR/pball" ]; then
@@ -85,23 +73,34 @@ services:
           return 1
         }
 
-        missing_italy_textures=0
-        for tex in \
-          ctp1/concrete_g_ ctp1/marble_m_1 ctp1/roof_t_1 ctp1/roof_t_3 ctp1/tiles_m_5 \
-          pball/azwall3_2 pball/b_brl1 pball/b_brl2 pball/b_brt1 pball/b_brt2 pball/b_flag1 \
-          pball/b_wood1 pball/box3 pball/box3_5 pball/box4_1 pball/box4_2 pball/box_1 \
-          pball/city5_3 pball/city6_7 pball/city6_8 pball/clip pball/grave03_4 pball/hay_side \
-          pball/lit2_5 pball/lit3_2 pball/ncmarb1 pball/r_brl1 pball/r_brt1 pball/r_flag1 \
-          pball/r_wood1 pball/rock1_1 pball/rock3_7 pball/rock4_2 pball/rockp2_2 pball/roofp1_1 \
-          pball/sky2 pball/tudorstone1 pball/tudorstone2 pball/uwall1_3 pball/w_wood5 \
-          pball/wizwood1_3 pball/wizwood1_4 pball/wood1_1 pball/wood1_7 pball/woodflr1_2; do
-          if ! ensure_texture "$$tex"; then
-            missing_italy_textures=$$((missing_italy_textures + 1))
+        missing_map_textures=0
+        for mapname in $$(python3 /scripts/config_maps.py --config /config/config.yaml); do
+          MAP_FILE="/maps/$${mapname}.bsp"
+          MAP_URL="http://dplogin.com/files/maps/$${mapname}.bsp"
+          if [ -d "$$MAP_FILE" ]; then
+            rm -rf "$$MAP_FILE"
           fi
+          if [ ! -s "$$MAP_FILE" ]; then
+            echo "Downloading $$mapname.bsp to $$MAP_FILE"
+            wget -q -O "$$MAP_FILE" "$$MAP_URL" || { rm -f "$$MAP_FILE"; echo "ERROR: wget failed for $$MAP_URL" >&2; exit 1; }
+            if [ ! -s "$$MAP_FILE" ]; then
+              echo "ERROR: map file is empty after download: $$MAP_FILE" >&2
+              exit 1
+            fi
+          fi
+          tex_list=$$(mktemp)
+          python3 /scripts/list_bsp_textures.py "$$MAP_FILE" > "$$tex_list"
+          while IFS= read -r tex || [ -n "$$tex" ]; do
+            [ -z "$$tex" ] && continue
+            if ! ensure_texture "$$tex"; then
+              missing_map_textures=$$((missing_map_textures + 1))
+            fi
+          done < "$$tex_list"
+          rm -f "$$tex_list"
         done
 
-        if [ "$$missing_italy_textures" -gt 0 ]; then
-          echo "Warning: $$missing_italy_textures italy textures are still missing." >&2
+        if [ "$$missing_map_textures" -gt 0 ]; then
+          echo "Warning: $$missing_map_textures map textures are still missing." >&2
         fi
 
         for cfg in default.cfg rotation.txt commands.txt; do
@@ -113,8 +112,14 @@ services:
 
         sh /scripts/apply-config.sh "$$CFG_DST_DIR"
 
-        # Keep configs editable from the host even if created by root in container.
-        chmod -R a+rwX "$$CFG_DST_DIR"
+        # Own everything under ./pball like the bind mount root (host user), not root:root.
+        if [ -d /pball ]; then
+          PB_OWNER=$$(stat -c '%u:%g' /pball)
+          chown -R "$$PB_OWNER" /pball/maps /pball/textures /pball/configs 2>/dev/null || true
+          [ -f /pball/gamei386.so ] && chown "$$PB_OWNER" /pball/gamei386.so 2>/dev/null || true
+        fi
+        chmod -R a+rwX /pball/maps /pball/textures "$$CFG_DST_DIR" 2>/dev/null || true
+        [ -f /pball/gamei386.so ] && chmod a+rw /pball/gamei386.so 2>/dev/null || true
         [ -f /config/config.yaml ] && chmod a+rw /config/config.yaml || true
         [ -f /config/config.yml ] && chmod a+rw /config/config.yml || true
 
@@ -134,7 +139,7 @@ services:
     ports:
       - "27910:27910/udp"
     volumes:
-      - ./pball/maps/italy.bsp:/paintball2/pball/maps/italy.bsp:ro
+      - ./pball/maps:/paintball2/pball/maps:ro
       - ./pball/textures:/paintball2/pball/textures:ro
       - ./pball/configs:/paintball2/pball/configs:rw
       - ./config.yaml:/config/config.yaml:ro
@@ -146,4 +151,4 @@ services:
       - |
         set -e
         sh /scripts/apply-config.sh /paintball2/pball/configs
-        exec start.sh +set dedicated 1 +exec server.cfg +map italy
+        exec sh /scripts/start_dedicated.sh

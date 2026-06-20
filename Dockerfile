@@ -10,6 +10,9 @@ RUN apt-get update \
 
 USER dpserver
 COPY --chmod=755 scripts/render_config.py /scripts/render_config.py
+COPY --chmod=755 scripts/config_maps.py /scripts/config_maps.py
+COPY --chmod=755 scripts/list_bsp_textures.py /scripts/list_bsp_textures.py
 COPY --chmod=755 scripts/apply-config.sh /scripts/apply-config.sh
+COPY --chmod=755 scripts/start_dedicated.sh /scripts/start_dedicated.sh
 
 WORKDIR /paintball2
